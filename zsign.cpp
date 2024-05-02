@@ -21,6 +21,7 @@ const struct option options[] = {
 	{"entitlements", required_argument, NULL, 'e'},
 	{"output", required_argument, NULL, 'o'},
 	{"zip_level", required_argument, NULL, 'z'},
+	{"undylib", required_argument, NULL, 'u'},
 	{"dylib", required_argument, NULL, 'l'},
 	{"weak", no_argument, NULL, 'w'},
 	{"install", no_argument, NULL, 'i'},
@@ -44,6 +45,7 @@ int usage()
 	ZLog::Print("-r, --bundle_version\tNew bundle version to change.\n");
 	ZLog::Print("-e, --entitlements\tNew entitlements to change.\n");
 	ZLog::Print("-z, --zip_level\t\tCompressed level when output the ipa file. (0-9)\n");
+	ZLog::Print("-u, --undylib\t\tPath to uninject dylib file.\n");
 	ZLog::Print("-l, --dylib\t\tPath to inject dylib file.\n");
 	ZLog::Print("-w, --weak\t\tInject dylib as LC_LOAD_WEAK_DYLIB.\n");
 	ZLog::Print("-i, --install\t\tInstall ipa file using ideviceinstaller command for test.\n");
@@ -61,6 +63,7 @@ int main(int argc, char *argv[])
 	bool bForce = false;
 	bool bInstall = false;
 	bool bWeakInject = false;
+	bool bUnInstallDylib = false;
 	uint32_t uZipLevel = 0;
 
 	string strCertFile;
@@ -76,7 +79,7 @@ int main(int argc, char *argv[])
 
 	int opt = 0;
 	int argslot = -1;
-	while (-1 != (opt = getopt_long(argc, argv, "dfvhc:k:m:o:ip:e:b:n:z:ql:w", options, &argslot)))
+	while (-1 != (opt = getopt_long(argc, argv, "dfvhc:k:m:o:ip:e:b:n:z:ql:u:w", options, &argslot)))
 	{
 		switch (opt)
 		{
@@ -112,6 +115,10 @@ int main(int argc, char *argv[])
 			break;
 		case 'l':
 			strDyLibFile = optarg;
+			break;
+		case 'u':
+			strDyLibFile = optarg;
+			bUnInstallDylib = true;
 			break;
 		case 'i':
 			bInstall = true;
@@ -174,9 +181,15 @@ int main(int argc, char *argv[])
 			if (macho.Init(strPath.c_str()))
 			{
 				if (!strDyLibFile.empty())
-				{ //inject dylib
-					bool bCreate = false;
-					macho.InjectDyLib(bWeakInject, strDyLibFile.c_str(), bCreate);
+				{
+				    if(bUnInstallDylib) {
+				    	//un inject dylib
+				    	macho.UnInjectDyLib(strDyLibFile.c_str());
+				    } else {
+				    	//inject dylib
+				    	bool bCreate = false;
+				    	macho.InjectDyLib(bWeakInject, strDyLibFile.c_str(), bCreate);
+				    }
 				}
 				else
 				{

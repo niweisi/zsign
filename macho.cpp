@@ -307,3 +307,21 @@ bool ZMachO::InjectDyLib(bool bWeakInject, const char *szDyLibPath, bool &bCreat
 	ZLog::Warn(">>> Success!\n");
 	return true;
 }
+
+bool ZMachO::UnInjectDyLib(const char *szDyLibPath)
+{
+	ZLog::WarnV(">>> Un inject Dylib: %s ... \n", szDyLibPath);
+	vector<uint32_t> arrMachOesSizes;
+	for (size_t i = 0; i < m_arrArchOes.size(); i++)
+	{
+		// const char str[] = "@rpath/testdylib.dylib";
+		std::set<std::string> stringSet;
+		// 将字符串字面量转换为std::string
+		std::string tempStr(szDyLibPath);
+		// 将转换后的字符串添加到set中
+		stringSet.insert(tempStr);
+		m_arrArchOes[i]->uninstallDylibs(stringSet);
+	}
+	ZLog::Warn(">>> Success!\n");
+	return true;
+}
